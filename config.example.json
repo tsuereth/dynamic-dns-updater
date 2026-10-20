@@ -1,0 +1,12 @@
+{
+	"Ipv6Enabled": false,
+	"UpdateRecords": [
+		{
+			"HostedZone": "tsuereth.com",
+			"RecordNames": ["cam"],
+			"ServiceType": "Cloudflare",
+			"AccountId": "...",
+			"ApiToken": "..."
+		}
+	]
+}
