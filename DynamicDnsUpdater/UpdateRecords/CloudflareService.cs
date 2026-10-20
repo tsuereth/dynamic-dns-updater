@@ -60,7 +60,8 @@ namespace DynamicDnsUpdater.UpdateRecords
             }
 
             // Build a batch of record updates, as appropriate.
-            var recordsToUpdate = this.recordNames.ToHashSet();
+            var recordsToUpdateIpv4 = (ipv4 == null) ? new HashSet<string>() : this.recordNames.ToHashSet();
+            var recordsToUpdateIpv6 = (ipv6 == null) ? new HashSet<string>() : this.recordNames.ToHashSet();
             var zoneRecordNameSuffix = $".{this.hostedZone}";
             var recordsPatches = new List<BatchPatchOperation>();
             await foreach (var record in this.cloudflareClient.Dns.ListAllDnsRecordsAsync(zoneId))
@@ -80,15 +81,10 @@ namespace DynamicDnsUpdater.UpdateRecords
                     continue;
                 }
 
-                if (!recordsToUpdate.Contains(recordNameShort))
+                if (record.Type == DnsRecordType.A && recordsToUpdateIpv4.Contains(recordNameShort))
                 {
-                    //this.logger.LogDebug($"Ignoring hosted zone {this.hostedZone} {record.Type} record: {recordNameShort}");
-                    continue;
-                }
-                recordsToUpdate.Remove(recordNameShort);
+                    recordsToUpdateIpv4.Remove(recordNameShort);
 
-                if (record.Type == DnsRecordType.A && ipv4 != null)
-                {
                     if (!record.Content.Equals(ipv4.ToString(), StringComparison.Ordinal))
                     {
                         this.logger.LogInformation($"Preparing update for hosted zone {this.hostedZone} A record {recordNameShort} with outdated ipv4 {record.Content}");
@@ -99,8 +95,10 @@ namespace DynamicDnsUpdater.UpdateRecords
                         this.logger.LogInformation($"Hosted zone {this.hostedZone} A record {recordNameShort} already matches ipv4 {record.Content}");
                     }
                 }
-                else if (record.Type == DnsRecordType.AAAA && ipv6 != null)
+                else if (record.Type == DnsRecordType.AAAA && recordsToUpdateIpv6.Contains(recordNameShort))
                 {
+                    recordsToUpdateIpv6.Remove(recordNameShort);
+
                     if (!record.Content.Equals(ipv6.ToString(), StringComparison.Ordinal))
                     {
                         this.logger.LogInformation($"Preparing update for hosted zone {this.hostedZone} AAAA record {recordNameShort} with outdated ipv6 {record.Content}");
@@ -111,11 +109,15 @@ namespace DynamicDnsUpdater.UpdateRecords
                         this.logger.LogInformation($"Hosted zone {this.hostedZone} AAAA record {recordNameShort} already matches ipv6 {record.Content}");
                     }
                 }
+                else
+                {
+                    //this.logger.LogDebug($"Ignoring hosted zone {this.hostedZone} {record.Type} record: {recordNameShort}");
+                }
             }
 
-            if (recordsToUpdate.Count > 0)
+            if (recordsToUpdateIpv4.Count > 0 || recordsToUpdateIpv6.Count > 0)
             {
-                throw new ArgumentException($"Failed to find some records in the hosted zone {this.hostedZone}: {string.Join(',', recordsToUpdate)}");
+                throw new ArgumentException($"Failed to find some records in the hosted zone {this.hostedZone}: A records [{string.Join(',', recordsToUpdateIpv4)}] ; AAAA records [{string.Join(',', recordsToUpdateIpv6)}]");
             }
 
             if (recordsPatches.Count > 0)
