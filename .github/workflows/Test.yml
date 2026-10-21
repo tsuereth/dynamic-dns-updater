@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  # Only run this workflow on main pushes when code relevant to the release has NOT changed.
+  # Changes to test code, documentation, et al will run this; other changes will trigger a release.
+  push:
+    branches:
+      - main
+    paths:
+      - '!DynamicDnsUpdater/**'
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: SetupDotNet
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: CompileDynamicDnsUpdater
+        run: |
+          dotnet build DynamicDnsUpdater/DynamicDnsUpdater.csproj
