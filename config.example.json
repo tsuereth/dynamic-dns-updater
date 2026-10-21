@@ -1,9 +1,24 @@
 {
+	"Ipv4Enabled": true,
 	"Ipv6Enabled": false,
+	"AmazonAwsCheckIpEnabled": true,
+	"DynDnsCheckIpEnabled": true,
+	"HurricaneElectricCheckIpEnabled": true,
+	"ICanHazIpEnabled": true,
+	"InformActionIpEchoEnabled": true,
+	"RipeStatWhatsMyIpEnabled": true,
+	"TestIpv6Enabled": true,
 	"UpdateRecords": [
 		{
-			"HostedZone": "tsuereth.com",
-			"RecordNames": ["cam"],
+			"HostedZone": "mydomain.com",
+			"RecordNames": ["@", "www", "secure"],
+			"ServiceType": "Cloudflare",
+			"AccountId": "...",
+			"ApiToken": "..."
+		},
+		{
+			"HostedZone": "myotherdomain.com",
+			"RecordNames": ["dyn", "stuff"],
 			"ServiceType": "Cloudflare",
 			"AccountId": "...",
 			"ApiToken": "..."
